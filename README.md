@@ -1,5 +1,7 @@
 # Python Todo List CLI
-Follow the tutorial to make it yourself.
+Follow [the tutorial to make your own Todo List CLI using Python](https://blog.cotter.app/how-to-make-an-interactive-todo-list-cli-using-python-with-an-easy-login-mechanism/)
+
+![Python Todo List Cli](https://github.com/cotter-code/guide-python-todolist-cli/blob/master/PythonTodoListCLI.gif)
 
 ```shell
 Usage: cli.py [OPTIONS] COMMAND [ARGS]...
