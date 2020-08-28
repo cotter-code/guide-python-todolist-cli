@@ -39,32 +39,28 @@ def login():
 
 
 @main.command()
-@click.argument('listname', required=False)
-def create(listname):
+@click.option('--name', prompt='List name', help='Name for your new todo list')
+def create(name):
     """Create a todo list"""
     # Get access token
     access_token = tokenhandler.get_token_from_file(
         token_file_name, api_key)["access_token"]
 
     # Construct request
-    if not listname or len(listname) <= 0:
-        listname = os.getcwd()
     url = "https://cottertodolist.herokuapp.com/list/create"
     headers = {'Content-Type': 'application/json',
                'Authorization': 'Bearer ' + access_token}
-    data = {"name": listname}
+    data = {"name": name}
     response = requests.post(url, json=data, headers=headers)
 
     if response.status_code != 200:
         response.raise_for_status()
 
-    click.echo('List "' + listname + '" created!')
+    click.echo("List " + name + " created!")
 
 
 @main.command()
-@click.argument('listname', required=False)
-@click.argument('taskname', required=False)
-def add(listname, taskname):
+def add():
     """Create a todo task for a list"""
     # Get access token from file
     access_token = tokenhandler.get_token_from_file(
@@ -76,58 +72,44 @@ def add(listname, taskname):
     response = requests.get(url, headers=headers)
     lists = response.json()
 
-    if not listname or len(listname) <= 0:
-        # Prompt to pick list
-        options = map(lambda x: x["name"], lists)
-        questions = [
-            {
-                'type': 'list',
-                'name': 'list_name',
-                'message': 'Add task to which list?',
-                'choices': options,
-            },
-        ]
-        answers = prompt(questions)
-        if not answers:
-            return
-        listname = answers['list_name']
-    elif listname == '.':
-        listname = os.getcwd()
-
-    if not taskname or len(taskname) <= 0:
-        # Prompt for task name
-        questions = [
-            {
-                'type': 'input',
-                'name': 'task_name',
-                'message': 'Task description',
-            }
-        ]
-        answers = prompt(questions)
-        if not answers:
-            return
-        taskname = answers['task_name']
+    # Prompt to pick list
+    options = map(lambda x: x["name"], lists)
+    questions = [
+        {
+            'type': 'list',
+            'name': 'list_name',
+            'message': 'Add task to which list?',
+            'choices': options,
+        },
+        {
+            'type': 'input',
+            'name': 'task_name',
+            'message': 'Task description',
+        }
+    ]
+    answers = prompt(questions)
+    if not answers:
+        return
 
     # Call API to create task fot the selected list
     url = "https://cottertodolist.herokuapp.com/todo/create"
     headers = {'Content-Type': 'application/json',
                'Authorization': 'Bearer ' + access_token}
     data = {
-        "name": listname,
-        "task": taskname
+        "name": answers['list_name'],
+        "task": answers['task_name']
     }
     response = requests.post(url, json=data, headers=headers)
     if response.status_code != 200:
         response.raise_for_status()
 
-    click.echo('Task "' + taskname +
-               '" is added in list "' + listname + '"')
+    click.echo("Task " + answers['task_name'] +
+               " is added in list " + answers['list_name'])
 
 
 @main.command()
-@click.argument('listname', required=False)
 @click.option('-a', '--all', is_flag=True)  # Make a boolean flag
-def ls(listname, all):
+def ls(all):
     """Show lists"""
     # Get access token from file
     access_token = tokenhandler.get_token_from_file(
@@ -151,26 +133,22 @@ def ls(listname, all):
                 else:
                     click.echo("[ ] " + task['task'])
     else:
-        if not listname or len(listname) <= 0:
-            # Show a prompt to choose a list
-            questions = [
-                {
-                    'type': 'list',
-                    'name': 'list',
-                    'message': 'Which list do you want to see?',
-                    'choices': list(map(lambda lst: lst['name'], listsFormatted))
-                },
-            ]
-            answers = prompt(questions)
-            if not answers:
-                return
-            listname = answers['list']
-        elif listname == '.':
-            listname = os.getcwd()
+        # Show a prompt to choose a list
+        questions = [
+            {
+                'type': 'list',
+                'name': 'list',
+                'message': 'Which list do you want to see?',
+                'choices': list(map(lambda lst: lst['name'], listsFormatted))
+            },
+        ]
+        answers = prompt(questions)
+        if not answers:
+            return
 
         # Get the chosen list
         chosenList = list(
-            filter(lambda lst: lst['name'] == listname, listsFormatted))
+            filter(lambda lst: lst['name'] == answers['list'], listsFormatted))
         if len(chosenList) <= 0:
             click.echo("Invalid choice of list")
             return
@@ -186,8 +164,7 @@ def ls(listname, all):
 
 
 @main.command()
-@click.argument('listname', required=False)
-def toggle(listname):
+def toggle():
     """Update tasks in a list"""
     # Get access token from file
     access_token = tokenhandler.get_token_from_file(
@@ -201,26 +178,22 @@ def toggle(listname):
         response.raise_for_status()
     listsFormatted = response.json()
 
-    if not listname or len(listname) <= 0:
-        # Show a prompt to choose a list
-        questions = [
-            {
-                'type': 'list',
-                'name': 'list',
-                'message': 'Which list do you want to update?',
-                'choices': list(map(lambda lst: lst['name'], listsFormatted))
-            },
-        ]
-        answers = prompt(questions)
-        if not answers:
-            return
-        listname = answers['list_name']
-    elif listname == '.':
-        listname = os.getcwd()
+    # Show a prompt to choose a list
+    questions = [
+        {
+            'type': 'list',
+            'name': 'list',
+            'message': 'Which list do you want to update?',
+            'choices': list(map(lambda lst: lst['name'], listsFormatted))
+        },
+    ]
+    answers = prompt(questions)
+    if not answers:
+        return
 
         # Get the chosen list
     chosenList = list(
-        filter(lambda lst: lst['name'] == listname, listsFormatted))
+        filter(lambda lst: lst['name'] == answers['list'], listsFormatted))
     if len(chosenList) <= 0:
         click.echo("Invalid choice of list")
         return
@@ -257,9 +230,8 @@ def toggle(listname):
 
 
 @main.command()
-@click.argument('listname', required=False)
 @click.option('-rf', '--removelist', is_flag=True)  # Make a boolean flag
-def rm(removelist, listname):
+def rm(removelist):
     """Delete a task in a list or delete a whole list"""
     # Get access token from file
     access_token = tokenhandler.get_token_from_file(
@@ -273,26 +245,22 @@ def rm(removelist, listname):
         response.raise_for_status()
     listsFormatted = response.json()
 
-    if not listname or len(listname) <= 0:
-        # Show a prompt to choose a list
-        questions = [
-            {
-                'type': 'list',
-                'name': 'list',
-                'message': 'Which list do you want to delete' if removelist else 'Which list does the task belongs to?',
-                'choices': list(map(lambda lst: lst['name'], listsFormatted))
-            },
-        ]
-        answers = prompt(questions)
-        if not answers:
-            return
-        listname = answers['list']
-    elif listname == '.':
-        listname = os.getcwd()
+    # Show a prompt to choose a list
+    questions = [
+        {
+            'type': 'list',
+            'name': 'list',
+            'message': 'Which list do you want to delete' if removelist else 'Which list does the task belongs to?',
+            'choices': list(map(lambda lst: lst['name'], listsFormatted))
+        },
+    ]
+    answers = prompt(questions)
+    if not answers:
+        return
 
     # Get the chosen list
     chosenList = list(
-        filter(lambda lst: lst['name'] == listname, listsFormatted))
+        filter(lambda lst: lst['name'] == answers['list'], listsFormatted))
     if len(chosenList) <= 0:
         click.echo("Invalid choice of list")
         return
