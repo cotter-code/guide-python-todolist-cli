@@ -4,9 +4,10 @@ from PyInquirer import prompt
 import requests
 import click
 import os
+import sys
 import cotter
 from cotter import tokenhandler
-token_file_name = "cotter_token.json"
+token_file_name = os.path.join(sys.path[0], "cotter_token.json")
 
 # 1️⃣ Add your Cotter API KEY ID here
 api_key = os.getenv("TODO_LIST_API_KEY_ID")
