@@ -9,7 +9,7 @@ from cotter import tokenhandler
 token_file_name = "cotter_token.json"
 
 # 1️⃣ Add your Cotter API KEY ID here
-api_key = os.getenv("COTTER_API_KEY_ID")
+api_key = os.getenv("TODO_LIST_API_KEY_ID")
 
 
 @click.group()
@@ -47,7 +47,7 @@ def create(listname):
         token_file_name, api_key)["access_token"]
 
     # Construct request
-    if not listname or len(listname) <= 0:
+    if not listname or len(listname) <= 0 or listname == '.':
         listname = os.getcwd()
     url = "https://cottertodolist.herokuapp.com/list/create"
     headers = {'Content-Type': 'application/json',
